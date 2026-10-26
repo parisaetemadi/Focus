@@ -6,6 +6,8 @@ const countdown = document.getElementById('countdown');
 const bar = document.getElementById('bar');
 const barFill = document.getElementById('bar-fill');
 const activeNote = document.getElementById('active-note');
+const dot = document.getElementById('dot');
+const status = document.getElementById('status');
 const sitesBox = document.getElementById('sites');
 const count = document.getElementById('count');
 const saved = document.getElementById('saved');
@@ -31,6 +33,9 @@ function render(session) {
   const active = Boolean(session);
   views.idle.hidden = active;
   views.active.hidden = !active;
+  dot.classList.toggle('on', active);
+  status.classList.toggle('on', active);
+  status.textContent = active ? 'Blocking' : 'Not blocking';
   if (!active) return;
 
   if (session.endsAt === null) {

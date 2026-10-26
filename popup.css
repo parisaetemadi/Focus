@@ -19,11 +19,40 @@ body {
 
 main { padding: 16px; }
 
-h1 {
-  margin: 0 0 14px;
-  font-size: 15px;
-  letter-spacing: 0.02em;
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Hollow while nothing is blocked, filled once a session runs. */
+.dot {
+  width: 10px;
+  height: 10px;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+}
+
+.dot.on {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.status.on { color: #c7d2fe; }
 
 .hint {
   margin: 0 0 8px;
