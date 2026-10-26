@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Just Focus</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<main>
+  <h1>Just Focus</h1>
+
+  <section id="idle" hidden>
+    <p class="hint">Block your list for&hellip;</p>
+    <div class="chips" id="durations">
+      <button class="chip" data-minutes="25">25 min</button>
+      <button class="chip" data-minutes="50">50 min</button>
+      <button class="chip" data-minutes="90">90 min</button>
+      <button class="chip" data-minutes="0">Until I stop</button>
+    </div>
+    <button class="primary" id="start">Start focus</button>
+  </section>
+
+  <section id="active" hidden>
+    <p class="countdown" id="countdown">&mdash;</p>
+    <p class="hint" id="active-note"></p>
+    <button class="ghost" id="stop">End focus</button>
+  </section>
+
+  <details id="declutter">
+    <summary>Hide stuff (<span id="hidden-count">0</span> on)</summary>
+    <p class="hint">Always on — no session needed.</p>
+    <div id="toggles"></div>
+  </details>
+
+  <details id="list">
+    <summary>Blocked sites (<span id="count">0</span>)</summary>
+    <textarea id="sites" rows="7" spellcheck="false"
+      placeholder="one domain per line&#10;instagram.com&#10;reddit.com"></textarea>
+    <div class="row">
+      <button class="ghost small" id="save">Save list</button>
+      <span class="saved" id="saved" hidden>Saved</span>
+    </div>
+  </details>
+</main>
+<script src="rules.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
