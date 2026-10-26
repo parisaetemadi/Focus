@@ -89,14 +89,52 @@ button.ghost.small {
   font-size: 12px;
 }
 
+.timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .countdown {
-  margin: 2px 0 2px;
-  font-size: 30px;
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-#active .hint { margin-bottom: 12px; }
+#active .hint { margin: 2px 0 0; }
+
+/* Square enough to read as "stop", big enough to hit without aiming. */
+button.icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+button.icon:hover { border-color: #3b3f4b; }
+
+.bar {
+  height: 4px;
+  margin-top: 12px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
 
 details {
   margin-top: 16px;

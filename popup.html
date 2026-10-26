@@ -21,9 +21,18 @@
   </section>
 
   <section id="active" hidden>
-    <p class="countdown" id="countdown">&mdash;</p>
-    <p class="hint" id="active-note"></p>
-    <button class="ghost" id="stop">End focus</button>
+    <div class="timer">
+      <div>
+        <p class="countdown" id="countdown">&mdash;</p>
+        <p class="hint" id="active-note"></p>
+      </div>
+      <button class="icon" id="stop" aria-label="End focus" title="End focus">
+        <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="12" height="12" rx="2.5" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+    <div class="bar" id="bar"><div id="bar-fill"></div></div>
   </section>
 
   <details id="declutter">

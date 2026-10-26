@@ -3,6 +3,8 @@ const views = {
   active: document.getElementById('active')
 };
 const countdown = document.getElementById('countdown');
+const bar = document.getElementById('bar');
+const barFill = document.getElementById('bar-fill');
 const activeNote = document.getElementById('active-note');
 const sitesBox = document.getElementById('sites');
 const count = document.getElementById('count');
@@ -34,9 +36,12 @@ function render(session) {
   if (session.endsAt === null) {
     countdown.textContent = 'On';
     activeNote.textContent = 'No timer — running until you stop it.';
+    bar.hidden = true;
     return;
   }
 
+  bar.hidden = false;
+  const span = session.endsAt - session.startedAt;
   const tick = () => {
     const left = session.endsAt - Date.now();
     if (left <= 0) {
@@ -44,6 +49,7 @@ function render(session) {
       return;
     }
     countdown.textContent = format(left);
+    barFill.style.width = `${(1 - left / span) * 100}%`;
   };
   activeNote.textContent = 'left in this session';
   tick();
