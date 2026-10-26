@@ -1,7 +1,6 @@
 // Focus time — turns a focus session into declarativeNetRequest redirect rules.
 // A session is either timed ({ endsAt }) or open-ended ({ endsAt: null }).
 
-const TICK_ALARM = 'focus-tick';
 const END_ALARM = 'focus-end';
 
 const DEFAULT_SITES = [
@@ -65,53 +64,54 @@ async function syncRules() {
   });
 
   if (!active && session) await chrome.storage.local.remove('session');
-  await syncBadge(active ? session : null);
   await syncAlarms(active ? session : null);
 }
 
-function minutesLeft(session) {
-  if (!session || session.endsAt === null) return null;
-  return Math.max(0, Math.ceil((session.endsAt - Date.now()) / 60000));
-}
-
-async function syncBadge(session) {
-  if (!session) {
-    await chrome.action.setBadgeText({ text: '' });
-    return;
-  }
-  const left = minutesLeft(session);
-  await chrome.action.setBadgeBackgroundColor({ color: '#4f46e5' });
-  // Minutes while they fit, hours past that — a badge holds about four glyphs.
-  const text = left === null ? 'ON' : left > 99 ? `${Math.ceil(left / 60)}h` : String(left);
-  await chrome.action.setBadgeText({ text });
-}
-
+// No badge: the toolbar icon stays as drawn, and the popup carries the state.
+// So the only alarm needed is the one that ends a timed session.
 async function syncAlarms(session) {
-  await chrome.alarms.clear(TICK_ALARM);
   await chrome.alarms.clear(END_ALARM);
-  if (!session) return;
-  // The tick keeps the badge countdown honest while the popup is closed.
-  await chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 });
-  if (session.endsAt !== null) {
+  if (session && session.endsAt !== null) {
     await chrome.alarms.create(END_ALARM, { when: session.endsAt });
   }
+}
+
+// Which blocked site a URL belongs to, or null.
+function matchSite(url, sites) {
+  let host;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    host = parsed.hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+  return sites.find((site) => host === site || host.endsWith(`.${site}`)) ?? null;
+}
+
+function blockedUrl(site) {
+  return chrome.runtime.getURL(`blocked.html?site=${encodeURIComponent(site)}`);
 }
 
 // Sites already open when a session starts are only caught on reload.
 async function reloadBlockedTabs(sites) {
   const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
   for (const tab of tabs) {
-    let host;
-    try {
-      host = new URL(tab.url).hostname.replace(/^www\./, '');
-    } catch {
-      continue;
-    }
-    if (sites.some((site) => host === site || host.endsWith(`.${site}`))) {
-      chrome.tabs.reload(tab.id);
-    }
+    if (matchSite(tab.url, sites)) chrome.tabs.reload(tab.id);
   }
 }
+
+// Net rules only see requests that reach the network. A site with its own
+// service worker (x.com is one) can answer a navigation from its cache, and
+// back/forward restores skip the network too — so watch the tab as well.
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  const url = changeInfo.url ?? (changeInfo.status === 'loading' ? tab.url : null);
+  if (!url) return;
+  const { session, sites } = await readState();
+  if (!isActive(session)) return;
+  const site = matchSite(url, sites);
+  if (site) chrome.tabs.update(tabId, { url: blockedUrl(site) });
+});
 
 async function start(minutes) {
   const session = {
