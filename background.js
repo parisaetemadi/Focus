@@ -1,4 +1,4 @@
-// Just Focus — turns a focus session into declarativeNetRequest redirect rules.
+// Focus time — turns a focus session into declarativeNetRequest redirect rules.
 // A session is either timed ({ endsAt }) or open-ended ({ endsAt: null }).
 
 const TICK_ALARM = 'focus-tick';
@@ -81,7 +81,9 @@ async function syncBadge(session) {
   }
   const left = minutesLeft(session);
   await chrome.action.setBadgeBackgroundColor({ color: '#4f46e5' });
-  await chrome.action.setBadgeText({ text: left === null ? 'ON' : left > 99 ? '99+' : String(left) });
+  // Minutes while they fit, hours past that — a badge holds about four glyphs.
+  const text = left === null ? 'ON' : left > 99 ? `${Math.ceil(left / 60)}h` : String(left);
+  await chrome.action.setBadgeText({ text });
 }
 
 async function syncAlarms(session) {

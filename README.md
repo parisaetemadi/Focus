@@ -1,4 +1,4 @@
-# Just Focus
+# Focus time
 
 A Chrome extension with two halves: it **blocks** the sites you name for as
 long as you say, and it **hides** the feeds on the sites you still want to use.

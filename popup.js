@@ -8,7 +8,7 @@ const sitesBox = document.getElementById('sites');
 const count = document.getElementById('count');
 const saved = document.getElementById('saved');
 
-let chosenMinutes = 25;
+let chosenMinutes = 60;
 let ticker = null;
 
 function send(message) {
@@ -17,9 +17,11 @@ function send(message) {
 
 function format(ms) {
   const total = Math.max(0, Math.round(ms / 1000));
-  const mins = Math.floor(total / 60);
+  const hours = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+  const parts = hours ? [hours, mins, secs] : [mins, secs];
+  return parts.map((part, i) => (i ? String(part).padStart(2, '0') : part)).join(':');
 }
 
 function render(session) {
