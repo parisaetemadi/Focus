@@ -38,23 +38,12 @@ h1 {
 }
 
 .note {
-  margin: 0 0 2rem;
+  margin: 0;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-button {
-  padding: 8px 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #3b3f4b;
-  color: var(--text);
+.line {
+  margin: 2.5rem 0 0;
+  color: #6f7686;
 }

@@ -1,6 +1,5 @@
 const site = new URLSearchParams(location.search).get('site');
 const note = document.getElementById('note');
-const stopButton = document.getElementById('stop');
 
 if (site) document.getElementById('site').textContent = site;
 
@@ -17,21 +16,14 @@ async function refresh() {
   const { session } = await chrome.runtime.sendMessage({ type: 'getState' });
   if (!session) {
     note.textContent = 'The session is over — reload to continue.';
-    stopButton.hidden = true;
     return;
   }
-  stopButton.hidden = false;
   if (session.endsAt === null) {
     note.textContent = 'Focus is on until you turn it off.';
     return;
   }
   note.textContent = `${format(session.endsAt - Date.now())} left in this session.`;
 }
-
-stopButton.addEventListener('click', async () => {
-  await chrome.runtime.sendMessage({ type: 'stop' });
-  location.reload();
-});
 
 refresh();
 setInterval(refresh, 1000);
