@@ -12,6 +12,9 @@
     <span class="status" id="status"></span>
   </header>
 
+  <p class="notice" id="stale" hidden>The extension needs a reload: open
+    <b>chrome://extensions</b> and hit Reload on Focus time.</p>
+  <p class="hint empty" id="empty" hidden>No limits yet — add one under More.</p>
   <div id="limits"></div>
   <p class="hint pending" id="pending" hidden></p>
 
@@ -55,7 +58,7 @@
       placeholder="one domain per line&#10;instagram.com&#10;reddit.com"></textarea>
     <p class="hint fine">That list, one domain per line. Saves itself.</p>
 
-    <p class="hint top-gap">Hide feeds, always</p>
+    <p class="hint top-gap">Hide on every site that has it</p>
     <div id="toggles"></div>
   </details>
 </main>

@@ -49,30 +49,30 @@ easy path the one you chose, not a wall.
   click away. Subdomains are covered, so `reddit.com` also blocks
   `old.reddit.com`.
 
-## Hide stuff (no session needed)
+## Hide feeds (no session needed)
 
-The second half is always on, independent of focus sessions — the
-news-feed-eradicator idea. Tick what you don't want to see:
+Under **More**, always on, independent of limits and sessions. Four ticks, by
+the kind of thing rather than by the site — each covers every site that has
+one, and the sites that don't simply ignore it:
 
-| Site | Can hide |
+| Tick | Hides |
 | --- | --- |
-| YouTube | Shorts, home feed, sidebar suggestions, end cards, comments |
-| Reddit | Home/popular feed, trending sidebar |
-| X / Twitter | Timeline, trends and who-to-follow |
-| Instagram | Feed, stories tray, Reels/Explore links |
-| Facebook | News feed, stories and Reels |
-| LinkedIn | The feed |
-| TikTok | For You feed |
+| Feeds | YouTube home, Reddit home/popular, the X timeline, the Instagram feed, the Facebook news feed, the LinkedIn feed, TikTok For You |
+| Shorts, Reels and stories | YouTube Shorts, Instagram stories and Reels/Explore, Facebook stories and Reels, the TikTok For You nav |
+| Suggestions, trends and who to follow | YouTube's sidebar and end cards, Reddit's sidebar and trending, X's trends column, LinkedIn's asides |
+| Comments | YouTube and Reddit comment threads |
 
-Shorts is on by default; everything else starts off. With Shorts hidden, a
-`/shorts/` link also redirects to the normal player — same video, no reel.
+Shorts/Reels is on by default; the rest start off. With it on, a `/shorts/`
+link also redirects to the normal player — same video, no reel.
 
 Hiding is a stylesheet injected at `document_start`, so nothing flashes before
-it disappears. The catalog lives in `rules.js`; add a site or selector there
-and both the content script and the popup pick it up.
+it disappears. The catalog lives in `rules.js`; add a site to a group there and
+both the content script and the popup pick it up. When a selector goes stale
+(these sites rewrite their markup often) the rule simply stops hiding
+anything — it never breaks the page.
 
-When a selector goes stale (these sites rewrite their markup often) the rule
-simply stops hiding anything — it never breaks the page.
+Choices are saved the moment you make them and apply to every page load after,
+until you change them. Settings from the old per-site version carry over.
 
 ## How it works
 
@@ -81,7 +81,7 @@ simply stops hiding anything — it never breaks the page.
 | `background.js` | Counts the minutes, and turns limits and sessions into `declarativeNetRequest` redirect rules; owns the alarms and the stored state. |
 | `popup.*` | What's left of each day up front, the rest under More. |
 | `blocked.*` | The page you land on, and why you landed on it. |
-| `rules.js` | The declutter catalog: site → toggles → selectors. |
+| `rules.js` | The hide catalog: group → site → selectors, and the old settings' upgrade path. |
 | `declutter.js` | Injects the hiding stylesheet; escapes Shorts URLs. |
 
 Blocking happens in Chrome's network layer, so a blocked request never loads —
@@ -96,6 +96,10 @@ that started yesterday is never charged to today.
 ## Limits
 
 - Chrome only (and Chromium browsers — Edge, Brave, Arc).
+- Chrome re-reads the popup from disk every time it opens, but only picks up a
+  new `background.js` or `manifest.json` when the extension is reloaded. After
+  pulling changes, hit **Reload** at `chrome://extensions` — the popup says so
+  if it notices it is talking to an older worker.
 - Only top-level navigation is blocked, not embeds.
 - A limit is per day, local time, and the day turns over at midnight.
 - Nothing stops you disabling the extension; see above.

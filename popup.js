@@ -2,6 +2,8 @@
 // lives under More, and nothing here has a save button — it all saves itself.
 
 const dot = document.getElementById('dot');
+const stale = document.getElementById('stale');
+const empty = document.getElementById('empty');
 const status = document.getElementById('status');
 const limitsBox = document.getElementById('limits');
 const pendingNote = document.getElementById('pending');
@@ -181,6 +183,7 @@ function renderStatus(state) {
 }
 
 function apply(state) {
+  empty.hidden = Object.keys(state.limits).length > 0;
   renderStatus(state);
   renderLimits(state);
   renderSession(state.session);
@@ -189,7 +192,21 @@ function apply(state) {
 }
 
 async function refresh() {
-  apply(await send({ type: 'getState' }));
+  let state;
+  try {
+    state = await send({ type: 'getState' });
+  } catch {
+    state = null;
+  }
+  // Chrome re-reads this popup from disk every time it opens, but only picks
+  // up a new service worker when the extension is reloaded. An answer with no
+  // limits in it is the old worker talking.
+  if (!state || !state.limits) {
+    stale.hidden = false;
+    return;
+  }
+  stale.hidden = true;
+  apply(state);
 }
 
 document.getElementById('durations').addEventListener('click', (event) => {
@@ -223,35 +240,29 @@ refresh();
 setInterval(refresh, 1000);
 
 // --- Hide feeds ------------------------------------------------------------
-// Each tick is written straight to storage, so a choice made once is the
-// choice every time that site opens, until it is changed here.
+// One tick per kind of thing, covering every site that has one. Each is
+// written straight to storage, so a choice made once is the choice every time
+// any of those sites opens, until it is changed here.
 
 const togglesBox = document.getElementById('toggles');
 
 function renderToggles(enabled) {
   togglesBox.replaceChildren();
-  for (const site of Object.values(DECLUTTER_RULES)) {
-    const heading = document.createElement('p');
-    heading.className = 'site-name';
-    heading.textContent = site.label;
-    togglesBox.append(heading);
-
-    for (const rule of site.rules) {
-      const row = document.createElement('label');
-      row.className = 'toggle';
-      const box = document.createElement('input');
-      box.type = 'checkbox';
-      box.checked = Boolean(enabled[rule.id]);
-      box.dataset.id = rule.id;
-      row.append(box, document.createTextNode(rule.label));
-      togglesBox.append(row);
-    }
+  for (const rule of HIDE_RULES) {
+    const row = document.createElement('label');
+    row.className = 'toggle';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = Boolean(enabled[rule.id]);
+    box.dataset.id = rule.id;
+    row.append(box, document.createTextNode(rule.label));
+    togglesBox.append(row);
   }
 }
 
 async function readDeclutter() {
   const { declutter } = await chrome.storage.local.get('declutter');
-  return { ...defaultDeclutter(), ...declutter };
+  return readDeclutterSettings(declutter);
 }
 
 togglesBox.addEventListener('change', async (event) => {

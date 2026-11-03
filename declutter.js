@@ -1,5 +1,5 @@
 // Hides the parts of a site you asked to lose. Runs at document_start on every
-// site in the catalog, independent of focus sessions.
+// site in the catalog, independent of focus sessions and daily limits.
 
 const STYLE_ID = 'just-focus-declutter';
 const siteRules = rulesForHost(location.hostname);
@@ -37,9 +37,9 @@ function escapeShorts() {
 
 if (siteRules.length) {
   chrome.storage.local.get('declutter').then(({ declutter }) => {
-    const enabled = { ...defaultDeclutter(), ...declutter };
+    const enabled = readDeclutterSettings(declutter);
     apply(enabled);
-    if (enabled['yt-shorts'] && location.hostname.endsWith('youtube.com')) {
+    if (enabled.reels && location.hostname.endsWith('youtube.com')) {
       escapeShorts();
       // YouTube navigates without reloading, so catch later Shorts too.
       window.addEventListener('yt-navigate-finish', escapeShorts);
@@ -48,6 +48,6 @@ if (siteRules.length) {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes.declutter) return;
-    apply({ ...defaultDeclutter(), ...changes.declutter.newValue });
+    apply(readDeclutterSettings(changes.declutter.newValue));
   });
 }
