@@ -1,3 +1,11 @@
+// The popup is one screen: what is left of each site's day. Everything else
+// lives under More, and nothing here has a save button — it all saves itself.
+
+const dot = document.getElementById('dot');
+const status = document.getElementById('status');
+const limitsBox = document.getElementById('limits');
+const pendingNote = document.getElementById('pending');
+const sitesBox = document.getElementById('sites');
 const views = {
   idle: document.getElementById('idle'),
   active: document.getElementById('active')
@@ -6,14 +14,6 @@ const countdown = document.getElementById('countdown');
 const bar = document.getElementById('bar');
 const barFill = document.getElementById('bar-fill');
 const activeNote = document.getElementById('active-note');
-const sessionState = document.getElementById('session-state');
-const dot = document.getElementById('dot');
-const status = document.getElementById('status');
-const sitesBox = document.getElementById('sites');
-const count = document.getElementById('count');
-const saved = document.getElementById('saved');
-const limitsBox = document.getElementById('limits');
-const pendingNote = document.getElementById('pending');
 
 let chosenMinutes = 60;
 
@@ -30,10 +30,10 @@ function format(ms) {
   return parts.map((part, i) => (i ? String(part).padStart(2, '0') : part)).join(':');
 }
 
-// --- Daily limits ----------------------------------------------------------
+// --- What is left of today -------------------------------------------------
 
-const rows = new Map(); // site -> { fill, left, input }
-let built = '';         // which set of sites the rows were built from
+const rows = new Map(); // site -> { row, fill, left, input }
+let built = '';         // the set of sites the rows were built from
 let editing = false;    // a number is half-typed; leave the inputs alone
 
 function buildLimits(limits) {
@@ -49,8 +49,16 @@ function buildLimits(limits) {
     const name = document.createElement('span');
     name.className = 'limit-name';
     name.textContent = site;
+    const left = document.createElement('span');
+    left.className = 'limit-left';
+    top.append(name, left);
 
-    const edit = document.createElement('span');
+    const track = document.createElement('div');
+    track.className = 'bar';
+    const fill = document.createElement('div');
+    track.append(fill);
+
+    const edit = document.createElement('div');
     edit.className = 'limit-edit';
     const input = document.createElement('input');
     input.type = 'number';
@@ -58,7 +66,7 @@ function buildLimits(limits) {
     input.max = '1440';
     input.step = '5';
     input.value = String(limits[site]);
-    input.dataset.site = site;
+    input.setAttribute('aria-label', `Minutes a day on ${site}`);
     const drop = document.createElement('button');
     drop.className = 'drop';
     drop.type = 'button';
@@ -66,18 +74,9 @@ function buildLimits(limits) {
     drop.title = `Stop limiting ${site}`;
     drop.setAttribute('aria-label', `Stop limiting ${site}`);
     drop.textContent = '×';
-    edit.append(input, document.createTextNode('min'), drop);
-    top.append(name, edit);
+    edit.append(input, document.createTextNode('min a day'), drop);
 
-    const track = document.createElement('div');
-    track.className = 'bar';
-    const fill = document.createElement('div');
-    track.append(fill);
-
-    const left = document.createElement('p');
-    left.className = 'limit-left';
-
-    row.append(top, track, left);
+    row.append(top, track, edit);
     limitsBox.append(row);
     rows.set(site, { row, fill, left, input });
   }
@@ -92,30 +91,25 @@ function renderLimits(state) {
     const budget = (state.limits[site] ?? 0) * 60000;
     const spent = state.spent[site] ?? 0;
     const left = budget - spent;
-    const out = left <= 0;
-    row.row.classList.toggle('out', out);
+    row.row.classList.toggle('out', left <= 0);
     row.fill.style.width = `${budget ? Math.min(100, (spent / budget) * 100) : 100}%`;
-    row.left.textContent = out
-      ? 'Spent — back at midnight'
-      : `${format(left)} left today`;
+    row.left.textContent = left <= 0 ? 'back at midnight' : `${format(left)} left`;
     if (!editing) row.input.value = String(state.limits[site] ?? 0);
   }
 
-  if (!state.pending) {
-    pendingNote.hidden = true;
-    return;
-  }
-  const changes = [...new Set([...Object.keys(state.limits), ...Object.keys(state.pending)])]
-    .sort()
-    .filter((site) => state.pending[site] !== state.limits[site])
-    .map((site) => (site in state.pending ? `${site} ${state.pending[site]} min` : `${site} off`));
+  const changes = state.pending
+    ? [...new Set([...Object.keys(state.limits), ...Object.keys(state.pending)])]
+      .sort()
+      .filter((site) => state.pending[site] !== state.limits[site])
+      .map((site) => (site in state.pending ? `${site} ${state.pending[site]}` : `${site} off`))
+    : [];
   pendingNote.hidden = !changes.length;
   pendingNote.textContent = `From tomorrow: ${changes.join(', ')}.`;
 }
 
 async function saveLimits(limits) {
   editing = false;
-  built = ''; // rebuild from whatever the background decided to allow
+  built = ''; // rebuild from whatever the background allowed
   apply(await send({ type: 'setLimits', limits }));
 }
 
@@ -156,19 +150,15 @@ document.getElementById('add-limit').addEventListener('click', () => {
 
 // --- Session ---------------------------------------------------------------
 
-function renderSession(session, anyBlocked) {
+function renderSession(session) {
   const active = Boolean(session);
   views.idle.hidden = active;
   views.active.hidden = !active;
-  sessionState.textContent = active ? 'on' : 'off';
-  dot.classList.toggle('on', active || anyBlocked);
-  status.classList.toggle('on', active || anyBlocked);
-  status.textContent = active || anyBlocked ? 'Blocking' : 'Not blocking';
   if (!active) return;
 
   if (session.endsAt === null) {
     countdown.textContent = 'On';
-    activeNote.textContent = 'No timer — running until you stop it.';
+    activeNote.textContent = 'until you stop it';
     bar.hidden = true;
     return;
   }
@@ -180,15 +170,22 @@ function renderSession(session, anyBlocked) {
   barFill.style.width = `${(1 - left / span) * 100}%`;
 }
 
-function renderSites(sites) {
-  if (document.activeElement !== sitesBox) sitesBox.value = sites.join('\n');
-  count.textContent = String(sites.length);
+function renderStatus(state) {
+  const spent = state.blocked.length;
+  const on = Boolean(state.session) || spent > 0;
+  dot.classList.toggle('on', on);
+  status.classList.toggle('on', on);
+  if (state.session) status.textContent = 'Session on';
+  else if (spent) status.textContent = spent === 1 ? '1 site spent' : `${spent} sites spent`;
+  else status.textContent = 'Nothing spent yet';
 }
 
 function apply(state) {
-  renderSession(state.session, state.blocked.length > 0);
-  renderSites(state.sites);
+  renderStatus(state);
   renderLimits(state);
+  renderSession(state.session);
+  // Don't yank the list out from under the cursor mid-edit.
+  if (document.activeElement !== sitesBox) sitesBox.value = state.sites.join('\n');
 }
 
 async function refresh() {
@@ -212,10 +209,9 @@ document.getElementById('stop').addEventListener('click', async () => {
   apply(await send({ type: 'stop' }));
 });
 
-document.getElementById('save').addEventListener('click', async () => {
+// No save button: the list goes in when you click away from it.
+sitesBox.addEventListener('change', async () => {
   apply(await send({ type: 'setSites', sites: sitesBox.value.split('\n') }));
-  saved.hidden = false;
-  setTimeout(() => { saved.hidden = true; }, 1500);
 });
 
 for (const chip of document.querySelectorAll('.chip')) {
@@ -226,10 +222,11 @@ refresh();
 // The minutes tick down while the popup is open, so keep asking.
 setInterval(refresh, 1000);
 
-// --- Declutter toggles -----------------------------------------------------
+// --- Hide feeds ------------------------------------------------------------
+// Each tick is written straight to storage, so a choice made once is the
+// choice every time that site opens, until it is changed here.
 
 const togglesBox = document.getElementById('toggles');
-const hiddenCount = document.getElementById('hidden-count');
 
 function renderToggles(enabled) {
   togglesBox.replaceChildren();
@@ -250,7 +247,6 @@ function renderToggles(enabled) {
       togglesBox.append(row);
     }
   }
-  hiddenCount.textContent = String(Object.values(enabled).filter(Boolean).length);
 }
 
 async function readDeclutter() {
@@ -261,9 +257,9 @@ async function readDeclutter() {
 togglesBox.addEventListener('change', async (event) => {
   const box = event.target.closest('input[type="checkbox"]');
   if (!box) return;
-  const enabled = { ...(await readDeclutter()), [box.dataset.id]: box.checked };
-  await chrome.storage.local.set({ declutter: enabled });
-  hiddenCount.textContent = String(Object.values(enabled).filter(Boolean).length);
+  await chrome.storage.local.set({
+    declutter: { ...(await readDeclutter()), [box.dataset.id]: box.checked }
+  });
 });
 
 readDeclutter().then(renderToggles);

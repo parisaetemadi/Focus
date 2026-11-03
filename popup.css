@@ -5,6 +5,7 @@
   --muted: #9ea4b3;
   --line: #2c2f38;
   --accent: #6366f1;
+  --spent: #f0776c;
 }
 
 * { box-sizing: border-box; }
@@ -34,7 +35,7 @@ main { padding: 16px; }
   font-weight: 600;
 }
 
-/* Hollow while nothing is blocked, filled once a session runs. */
+/* Hollow while nothing is blocked, filled once something is. */
 .dot {
   width: 10px;
   height: 10px;
@@ -60,11 +61,127 @@ main { padding: 16px; }
   font-size: 12px;
 }
 
+.hint.fine {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hint.top-gap { margin-top: 18px; }
+
+.hint.pending {
+  margin: 12px 0 0;
+  color: #c7d2fe;
+  font-size: 11px;
+}
+
+/* --- What is left of today ------------------------------------------------ */
+
+.limit + .limit { margin-top: 14px; }
+
+.limit-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.limit-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.limit-left {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+/* Spent: the bar goes red and stays there until the day turns over. */
+.limit.out .bar div { background: var(--spent); }
+.limit.out .limit-left { color: var(--spent); }
+.limit.out .limit-name { color: var(--muted); }
+
+.limit-edit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.limit-edit input { margin-right: 1px; }
+
+.drop {
+  margin-left: auto;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.drop:hover { color: var(--text); }
+
+input[type="number"],
+input[type="text"] {
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+input[type="number"] { width: 48px; }
+input[type="text"] { flex: 1; min-width: 0; }
+
+/* --- More ----------------------------------------------------------------- */
+
+details {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+summary {
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+details[open] > summary { margin-bottom: 12px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .chips {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .chip {
@@ -87,7 +204,7 @@ main { padding: 16px; }
 
 button.primary {
   width: 100%;
-  padding: 10px 0;
+  padding: 9px 0;
   border: 0;
   border-radius: 8px;
   background: var(--accent);
@@ -100,23 +217,17 @@ button.primary {
 button.primary:hover { background: #5457e0; }
 
 button.ghost {
-  width: 100%;
-  padding: 9px 0;
+  padding: 5px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: transparent;
   color: var(--text);
   font: inherit;
+  font-size: 12px;
   cursor: pointer;
 }
 
 button.ghost:hover { border-color: #3b3f4b; }
-
-button.ghost.small {
-  width: auto;
-  padding: 5px 10px;
-  font-size: 12px;
-}
 
 .timer {
   display: flex;
@@ -133,6 +244,7 @@ button.ghost.small {
 }
 
 #active .hint { margin: 2px 0 0; }
+#active .bar { margin-top: 10px; }
 
 /* Square enough to read as "stop", big enough to hit without aiming. */
 button.icon {
@@ -140,8 +252,8 @@ button.icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: transparent;
@@ -150,32 +262,6 @@ button.icon {
 }
 
 button.icon:hover { border-color: #3b3f4b; }
-
-.bar {
-  height: 4px;
-  margin-top: 12px;
-  border-radius: 4px;
-  background: var(--line);
-  overflow: hidden;
-}
-
-.bar div {
-  height: 100%;
-  background: var(--accent);
-  transition: width 1s linear;
-}
-
-details {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-
-summary {
-  color: var(--muted);
-  font-size: 12px;
-  cursor: pointer;
-}
 
 textarea {
   width: 100%;
@@ -189,22 +275,9 @@ textarea {
   resize: vertical;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.saved {
-  color: #6ee7a8;
-  font-size: 12px;
-}
-
 #toggles {
   max-height: 190px;
   overflow-y: auto;
-  margin-top: 4px;
 }
 
 .site-name {
@@ -215,6 +288,8 @@ textarea {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
+.site-name:first-child { margin-top: 0; }
 
 .toggle {
   display: flex;
@@ -229,87 +304,3 @@ textarea {
   margin: 2px 0 0;
   accent-color: var(--accent);
 }
-
-/* --- Daily limits --------------------------------------------------------- */
-
-.limit {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.limit:first-child { padding-top: 0; }
-
-.limit-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.limit-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.limit-edit {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-input[type="number"],
-input[type="text"] {
-  width: 52px;
-  padding: 4px 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-}
-
-input[type="text"] { width: 100%; }
-
-.limit .bar { margin-top: 7px; }
-
-.limit-left {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Spent: the bar goes red and stays there until the day turns over. */
-.limit.out .bar div { background: #f0776c; }
-.limit.out .limit-left { color: #f0a49c; }
-
-.drop {
-  margin-left: 2px;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.drop:hover { color: var(--text); }
-
-.row.add { gap: 6px; }
-.row.add #new-site { flex: 1; }
-
-.hint.lock,
-.hint.pending {
-  margin: 10px 0 0;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.hint.pending { color: #c7d2fe; }
-
-#session[open] #idle,
-#session[open] #active { margin-top: 10px; }

@@ -11,6 +11,13 @@ Manifest V3, plain JS, no build step, nothing leaves the browser.
 2. **Load unpacked** → pick this folder.
 3. Pin the icon so the badge (minutes left) is visible.
 
+## The popup
+
+One screen: each site, what's left of today, and a box to change the number.
+Everything else — adding a site, focus sessions, feed hiding — is under
+**More**. Nothing has a save button; every change goes in as you make it, and
+the feed-hiding ticks are remembered per site until you change them.
+
 ## Daily limits
 
 The top of the popup. Each site gets minutes a day — **20 on x.com, 20 on
@@ -33,13 +40,14 @@ easy path the one you chose, not a wall.
 
 ## Focus sessions
 
-- Click the icon, open **Focus session**, pick a length, hit **Start focus**.
+- Click the icon, open **More**, pick a length, hit **Start focus**.
 - While a session runs, any page on your list redirects to a blocked screen
   that shows the time left. Open tabs on those sites reload into it too.
 - **End focus** stops it — in the popup or from the blocked page. No lockout,
   no password; it's a speed bump against habit, not a prison.
-- Edit the list under **Session block list**: one domain per line. Subdomains
-  are covered, so `reddit.com` also blocks `old.reddit.com`.
+- The list sits under the same section: one domain per line, saved when you
+  click away. Subdomains are covered, so `reddit.com` also blocks
+  `old.reddit.com`.
 
 ## Hide stuff (no session needed)
 
@@ -71,7 +79,7 @@ simply stops hiding anything — it never breaks the page.
 | File | Job |
 | --- | --- |
 | `background.js` | Counts the minutes, and turns limits and sessions into `declarativeNetRequest` redirect rules; owns the alarms and the stored state. |
-| `popup.*` | Budgets and what's left of them, start/stop, the two lists. |
+| `popup.*` | What's left of each day up front, the rest under More. |
 | `blocked.*` | The page you land on, and why you landed on it. |
 | `rules.js` | The declutter catalog: site → toggles → selectors. |
 | `declutter.js` | Injects the hiding stylesheet; escapes Shorts URLs. |

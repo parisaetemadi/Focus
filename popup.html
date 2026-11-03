@@ -9,27 +9,26 @@
 <main>
   <header class="top">
     <span class="brand"><span class="dot" id="dot"></span>Focus time</span>
-    <span class="status" id="status">Off</span>
+    <span class="status" id="status"></span>
   </header>
 
-  <section id="limits-view">
-    <p class="hint">Minutes a day, per site</p>
-    <div id="limits"></div>
+  <div id="limits"></div>
+  <p class="hint pending" id="pending" hidden></p>
+
+  <details id="more">
+    <summary>More</summary>
+
+    <p class="hint">Limit another site</p>
     <div class="row add">
       <input id="new-site" type="text" placeholder="another.com" spellcheck="false">
       <input id="new-minutes" type="number" min="0" max="1440" step="5" placeholder="min">
       <button class="ghost small" id="add-limit">Add</button>
     </div>
-    <p class="hint lock" id="limit-note">A limit you tighten starts now. One you
-      raise or remove starts tomorrow.</p>
-    <p class="hint pending" id="pending" hidden></p>
-  </section>
+    <p class="hint fine">Lowering a limit starts now. Raising one, or removing it
+      with the &times;, starts tomorrow.</p>
 
-  <details id="session">
-    <summary>Focus session (<span id="session-state">off</span>)</summary>
-
+    <p class="hint top-gap">Block the whole list for a while</p>
     <div id="idle" hidden>
-      <p class="hint">Block the whole list for&hellip;</p>
       <div class="chips" id="durations">
         <button class="chip" data-minutes="60">1 hour</button>
         <button class="chip" data-minutes="120">2 hours</button>
@@ -38,7 +37,6 @@
       </div>
       <button class="primary" id="start">Start focus</button>
     </div>
-
     <div id="active" hidden>
       <div class="timer">
         <div>
@@ -53,22 +51,12 @@
       </div>
       <div class="bar" id="bar"><div id="bar-fill"></div></div>
     </div>
-  </details>
-
-  <details id="declutter">
-    <summary>Hide stuff (<span id="hidden-count">0</span> on)</summary>
-    <p class="hint">Always on — no session needed.</p>
-    <div id="toggles"></div>
-  </details>
-
-  <details id="list">
-    <summary>Session block list (<span id="count">0</span>)</summary>
-    <textarea id="sites" rows="7" spellcheck="false"
+    <textarea id="sites" rows="5" spellcheck="false"
       placeholder="one domain per line&#10;instagram.com&#10;reddit.com"></textarea>
-    <div class="row">
-      <button class="ghost small" id="save">Save list</button>
-      <span class="saved" id="saved" hidden>Saved</span>
-    </div>
+    <p class="hint fine">That list, one domain per line. Saves itself.</p>
+
+    <p class="hint top-gap">Hide feeds, always</p>
+    <div id="toggles"></div>
   </details>
 </main>
 <script src="rules.js"></script>
