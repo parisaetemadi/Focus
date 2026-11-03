@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "Focus time",
   "version": "1.0.0",
-  "description": "Block distracting sites on a timer, and hide the feeds on the ones you keep.",
+  "description": "Daily time limits per site, plus focus sessions and feed hiding.",
   "permissions": [
     "declarativeNetRequest",
     "storage",
     "alarms",
-    "tabs"
+    "tabs",
+    "idle"
   ],
   "host_permissions": [
     "<all_urls>"

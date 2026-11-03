@@ -12,31 +12,48 @@
     <span class="status" id="status">Off</span>
   </header>
 
-  <section id="idle" hidden>
-    <p class="hint">Block your list for&hellip;</p>
-    <div class="chips" id="durations">
-      <button class="chip" data-minutes="60">1 hour</button>
-      <button class="chip" data-minutes="120">2 hours</button>
-      <button class="chip" data-minutes="180">3 hours</button>
-      <button class="chip" data-minutes="0">Until I stop</button>
+  <section id="limits-view">
+    <p class="hint">Minutes a day, per site</p>
+    <div id="limits"></div>
+    <div class="row add">
+      <input id="new-site" type="text" placeholder="another.com" spellcheck="false">
+      <input id="new-minutes" type="number" min="0" max="1440" step="5" placeholder="min">
+      <button class="ghost small" id="add-limit">Add</button>
     </div>
-    <button class="primary" id="start">Start focus</button>
+    <p class="hint lock" id="limit-note">A limit you tighten starts now. One you
+      raise or remove starts tomorrow.</p>
+    <p class="hint pending" id="pending" hidden></p>
   </section>
 
-  <section id="active" hidden>
-    <div class="timer">
-      <div>
-        <p class="countdown" id="countdown">&mdash;</p>
-        <p class="hint" id="active-note"></p>
+  <details id="session">
+    <summary>Focus session (<span id="session-state">off</span>)</summary>
+
+    <div id="idle" hidden>
+      <p class="hint">Block the whole list for&hellip;</p>
+      <div class="chips" id="durations">
+        <button class="chip" data-minutes="60">1 hour</button>
+        <button class="chip" data-minutes="120">2 hours</button>
+        <button class="chip" data-minutes="180">3 hours</button>
+        <button class="chip" data-minutes="0">Until I stop</button>
       </div>
-      <button class="icon" id="stop" aria-label="End focus" title="End focus">
-        <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-          <rect x="0.5" y="0.5" width="12" height="12" rx="2.5" fill="currentColor"/>
-        </svg>
-      </button>
+      <button class="primary" id="start">Start focus</button>
     </div>
-    <div class="bar" id="bar"><div id="bar-fill"></div></div>
-  </section>
+
+    <div id="active" hidden>
+      <div class="timer">
+        <div>
+          <p class="countdown" id="countdown">&mdash;</p>
+          <p class="hint" id="active-note"></p>
+        </div>
+        <button class="icon" id="stop" aria-label="End focus" title="End focus">
+          <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+            <rect x="0.5" y="0.5" width="12" height="12" rx="2.5" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <div class="bar" id="bar"><div id="bar-fill"></div></div>
+    </div>
+  </details>
 
   <details id="declutter">
     <summary>Hide stuff (<span id="hidden-count">0</span> on)</summary>
@@ -45,7 +62,7 @@
   </details>
 
   <details id="list">
-    <summary>Blocked sites (<span id="count">0</span>)</summary>
+    <summary>Session block list (<span id="count">0</span>)</summary>
     <textarea id="sites" rows="7" spellcheck="false"
       placeholder="one domain per line&#10;instagram.com&#10;reddit.com"></textarea>
     <div class="row">
