@@ -1,57 +1,60 @@
 # Focus time
 
-A Chrome extension with three halves: it gives each site a **daily budget** of
-minutes and shuts it off when they run out, it **blocks** your whole list for a
-focus session, and it **hides** the feeds on the sites you still want to use.
-Manifest V3, plain JS, no build step, nothing leaves the browser.
+A Chrome extension that gives each app a few minutes a day and then takes it
+away. Manifest V3, plain JS, no build step, nothing leaves the browser.
 
 ## Install
 
 1. Open `chrome://extensions` and turn on **Developer mode**.
 2. **Load unpacked** → pick this folder.
-3. Pin the icon so the badge (minutes left) is visible.
+3. Pin the icon.
 
 ## The popup
 
-One screen: each site, what's left of today, and a box to change the number.
-Everything else — adding a site, focus sessions, feed hiding — is under
-**More**. Nothing has a save button; every change goes in as you make it, and
-the feed-hiding ticks are remembered per site until you change them.
+One screen: each app, what's left of its day, a bar, and **Focus now**.
+Everything else is under **More**, and nothing has a save button.
 
-## Daily limits
+## App limits
 
-The top of the popup. Each site gets minutes a day — **20 on x.com, 20 on
-instagram.com, 5 on tiktok.com** out of the box — and the clock runs only while
-that site is the tab you are looking at, in a focused window, with someone at
-the keyboard. Spend the budget and the site redirects to the blocked screen for
-the rest of the day. It comes back at midnight, local time.
+Each app gets minutes a day — **20 on x.com, 20 on instagram.com, 5 on
+tiktok.com** out of the box — and the clock runs only while that app is the tab
+you are looking at, in a focused window, with someone at the keyboard. Spend
+them and the app redirects to the blocked screen for the rest of the day. It
+comes back at midnight, local time.
 
-Nothing in the extension lifts a spent limit early. There is no override button,
-ending a focus session doesn't touch it, and a limit you **loosen** — raise the
-minutes, or delete it with the × — keeps today's number and only loosens
-tomorrow. Tightening a limit, or adding a site, takes effect immediately. So the
-version of you that set the budget this morning gets the last word tonight.
+Nothing in the extension lifts a spent limit early. There is no override
+button, stopping Focus now doesn't touch it, and a limit you **loosen** —
+raising the number, or deleting the line — keeps today's number and only
+loosens tomorrow. Lowering one, or writing in a new app, takes effect
+immediately. So the version of you that wrote the list this morning gets the
+last word tonight.
 
+The list is written, one app per line, under **More**:
+
+```
+instagram.com 20
+tiktok.com 5
+x.com 20
+```
+
+That is the only place apps are added, changed or removed, and it saves itself
+when you click away. A line with no number keeps the minutes it already had.
 `x.com` and `twitter.com` are one app, so they share one budget.
 
-The honest caveat: this is an extension, so Chrome can still turn it off at
-`chrome://extensions`, and another browser or profile never had it. It makes the
-easy path the one you chose, not a wall.
+## Focus now
 
-## Focus sessions
+One button. It blocks every app on the list straight away, however many
+minutes they have left, and stays on until you stop it. Unlike a spent limit,
+this one is yours to call off — it's for the hour you decided to work, not for
+the habit.
 
-- Click the icon, open **More**, pick a length, hit **Start focus**.
-- While a session runs, any page on your list redirects to a blocked screen
-  that shows the time left. Open tabs on those sites reload into it too.
-- **End focus** stops it — in the popup or from the blocked page. No lockout,
-  no password; it's a speed bump against habit, not a prison.
-- The list sits under the same section: one domain per line, saved when you
-  click away. Subdomains are covered, so `reddit.com` also blocks
-  `old.reddit.com`.
+The honest caveat for both: this is an extension, so Chrome can still turn it
+off at `chrome://extensions`, and another browser or profile never had it. It
+makes the easy path the one you chose, not a wall.
 
-## Hide feeds (no session needed)
+## Hide feeds
 
-Under **More**, always on, independent of limits and sessions. Four ticks, by
+Under **More**, always on, independent of the limits. Four ticks, by
 the kind of thing rather than by the site — each covers every site that has
 one, and the sites that don't simply ignore it:
 
@@ -78,8 +81,8 @@ until you change them. Settings from the old per-site version carry over.
 
 | File | Job |
 | --- | --- |
-| `background.js` | Counts the minutes, and turns limits and sessions into `declarativeNetRequest` redirect rules; owns the alarms and the stored state. |
-| `popup.*` | What's left of each day up front, the rest under More. |
+| `background.js` | Counts the minutes, and turns limits and Focus now into `declarativeNetRequest` redirect rules; owns the alarms and the stored state. |
+| `popup.*` | What's left of each app up front, the written list under More. |
 | `blocked.*` | The page you land on, and why you landed on it. |
 | `rules.js` | The hide catalog: group → site → selectors, and the old settings' upgrade path. |
 | `declutter.js` | Injects the hiding stylesheet; escapes Shorts URLs. |
@@ -102,6 +105,7 @@ that started yesterday is never charged to today.
   if it notices it is talking to an older worker.
 - Only top-level navigation is blocked, not embeds.
 - A limit is per day, local time, and the day turns over at midnight.
+- Focus now has no timer: it is on until you stop it.
 - Nothing stops you disabling the extension; see above.
 - Decluttering reads no page content; it only adds a stylesheet.
 - Unpacked extensions stay installed, but Chrome nags about developer mode on

@@ -14,49 +14,20 @@
 
   <p class="notice" id="stale" hidden>The extension needs a reload: open
     <b>chrome://extensions</b> and hit Reload on Focus time.</p>
-  <p class="hint empty" id="empty" hidden>No limits yet — add one under More.</p>
+  <p class="hint empty" id="empty" hidden>No apps yet — write one under More.</p>
   <div id="limits"></div>
-  <p class="hint pending" id="pending" hidden></p>
+
+  <button class="primary" id="focus">Focus now</button>
 
   <details id="more">
     <summary>More</summary>
 
-    <p class="hint">Limit another site</p>
-    <div class="row add">
-      <input id="new-site" type="text" placeholder="another.com" spellcheck="false">
-      <input id="new-minutes" type="number" min="0" max="1440" step="5" placeholder="min">
-      <button class="ghost small" id="add-limit">Add</button>
-    </div>
-    <p class="hint fine">Lowering a limit starts now. Raising one, or removing it
-      with the &times;, starts tomorrow.</p>
-
-    <p class="hint top-gap">Block the whole list for a while</p>
-    <div id="idle" hidden>
-      <div class="chips" id="durations">
-        <button class="chip" data-minutes="60">1 hour</button>
-        <button class="chip" data-minutes="120">2 hours</button>
-        <button class="chip" data-minutes="180">3 hours</button>
-        <button class="chip" data-minutes="0">Until I stop</button>
-      </div>
-      <button class="primary" id="start">Start focus</button>
-    </div>
-    <div id="active" hidden>
-      <div class="timer">
-        <div>
-          <p class="countdown" id="countdown">&mdash;</p>
-          <p class="hint" id="active-note"></p>
-        </div>
-        <button class="icon" id="stop" aria-label="End focus" title="End focus">
-          <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-            <rect x="0.5" y="0.5" width="12" height="12" rx="2.5" fill="currentColor"/>
-          </svg>
-        </button>
-      </div>
-      <div class="bar" id="bar"><div id="bar-fill"></div></div>
-    </div>
-    <textarea id="sites" rows="5" spellcheck="false"
-      placeholder="one domain per line&#10;instagram.com&#10;reddit.com"></textarea>
-    <p class="hint fine">That list, one domain per line. Saves itself.</p>
+    <textarea id="plan" rows="6" spellcheck="false"
+      placeholder="one app and its minutes a day, per line&#10;x.com 20&#10;tiktok.com 5"></textarea>
+    <p class="hint fine">One app and its minutes a day, per line. Saves itself.
+      Lowering a limit starts now; raising one, or deleting a line, starts
+      tomorrow.</p>
+    <p class="hint pending" id="pending" hidden></p>
 
     <p class="hint top-gap">Hide on every site that has it</p>
     <div id="toggles"></div>

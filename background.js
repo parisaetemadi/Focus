@@ -1,30 +1,18 @@
-// Focus time — turns focus sessions and daily limits into declarativeNetRequest
+// Focus time — turns app limits and Focus now into declarativeNetRequest
 // redirect rules.
 //
-// Two kinds of block:
-//   session — the whole list, for as long as a session runs. You start it, you
-//             can stop it.
-//   limit   — one site, once today's minutes on that site are spent. Nothing in
-//             the UI lifts that one: it stands until the day turns over, and a
-//             limit you loosen only loosens tomorrow.
+// One list of apps, each with minutes a day. Two ways one gets blocked:
+//   limit — its minutes for today are spent. Nothing in the UI lifts that: it
+//           stands until midnight, and a limit you loosen loosens tomorrow.
+//   focus — Focus now is on, which blocks every app on the list until you
+//           stop it.
 
-const END_ALARM = 'focus-end';
 const TICK_ALARM = 'focus-tick';
 const DAY_ALARM = 'focus-day';
 
 const TICK_MINUTES = 0.5; // Chrome won't repeat an alarm faster than 30s
 const MAX_STEP = 120000;  // a longer gap than this was sleep, not screen time
 const IDLE_AFTER = 60;    // seconds without input before time stops counting
-
-const DEFAULT_SITES = [
-  'instagram.com',
-  'x.com',
-  'twitter.com',
-  'facebook.com',
-  'tiktok.com',
-  'reddit.com',
-  'youtube.com'
-];
 
 // Minutes a day, per site. Spend them and the site is gone until midnight.
 const DEFAULT_LIMITS = {
@@ -42,15 +30,6 @@ function normalizeSite(input) {
   if (!site) return '';
   site = site.replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').split('/')[0].split('?')[0];
   return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(site) ? site : '';
-}
-
-function cleanSites(list) {
-  const seen = new Set();
-  for (const raw of list) {
-    const site = normalizeSite(raw);
-    if (site) seen.add(site);
-  }
-  return [...seen];
 }
 
 function canonical(site) {
@@ -90,12 +69,11 @@ function nextMidnight() {
 // loosened limit that was parked yesterday takes effect now.
 async function readState() {
   const store = await chrome.storage.local.get([
-    'session', 'sites', 'limits', 'pending', 'usage', 'tracking'
+    'focus', 'limits', 'pending', 'usage', 'tracking'
   ]);
 
   const day = todayKey();
-  const session = store.session ?? null;
-  const sites = Array.isArray(store.sites) ? store.sites : DEFAULT_SITES;
+  const focus = Boolean(store.focus);
   let limits = store.limits && typeof store.limits === 'object'
     ? store.limits
     : { ...DEFAULT_LIMITS };
@@ -116,12 +94,7 @@ async function readState() {
   }
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
 
-  return { session, sites, limits, pending, usage, tracking };
-}
-
-function isActive(session) {
-  if (!session) return false;
-  return session.endsAt === null || session.endsAt > Date.now();
+  return { focus, limits, pending, usage, tracking };
 }
 
 function spentOn(usage, site) {
@@ -133,12 +106,14 @@ function exhausted(limits, usage) {
   return Object.keys(limits).filter((site) => spentOn(usage, site) >= limits[site] * 60000);
 }
 
-// Every domain to block right now, and why — a limit outranks a session,
-// because it is the one that cannot be called off.
-function blockList({ session, sites, limits, usage }) {
+// Every domain to block right now, and why — a spent limit outranks Focus
+// now, because it is the one that cannot be called off.
+function blockList({ focus, limits, usage }) {
   const blocked = new Map();
-  if (isActive(session)) {
-    for (const site of sites) blocked.set(site, { why: 'session' });
+  if (focus) {
+    for (const site of Object.keys(limits)) {
+      for (const domain of domainsFor(site)) blocked.set(domain, { why: 'focus', site });
+    }
   }
   // `site` is whose budget the domain spends: twitter.com spends x.com's.
   for (const site of exhausted(limits, usage)) {
@@ -210,19 +185,14 @@ async function syncRules() {
     });
   }
 
-  if (state.session && !isActive(state.session)) await chrome.storage.local.remove('session');
-  await syncAlarms(state);
+  await syncAlarms();
   await enforceTabs(blocked);
   return blocked;
 }
 
-// The end-of-session alarm, plus a standing one at midnight so a limit lifts
-// itself when the day turns over.
-async function syncAlarms({ session }) {
-  await chrome.alarms.clear(END_ALARM);
-  if (isActive(session) && session.endsAt !== null) {
-    await chrome.alarms.create(END_ALARM, { when: session.endsAt });
-  }
+// A standing alarm at midnight, so a spent limit lifts itself when the day
+// turns over even if the browser sits untouched.
+async function syncAlarms() {
   if (!(await chrome.alarms.get(DAY_ALARM))) {
     await chrome.alarms.create(DAY_ALARM, { when: nextMidnight(), periodInMinutes: 1440 });
   }
@@ -277,20 +247,11 @@ async function tick() {
   return syncRules();
 }
 
-// --- Sessions and limits ---------------------------------------------------
+// --- Focus now and limits --------------------------------------------------
 
-async function start(minutes) {
-  const session = {
-    startedAt: Date.now(),
-    endsAt: minutes ? Date.now() + minutes * 60000 : null
-  };
-  await chrome.storage.local.set({ session });
-  await syncRules();
-  return session;
-}
-
-async function stop() {
-  await chrome.storage.local.remove('session');
+// Focus now has no timer: it is on until you turn it off.
+async function setFocus(on) {
+  await chrome.storage.local.set({ focus: Boolean(on) });
   await syncRules();
 }
 
@@ -315,10 +276,9 @@ async function setLimits(input) {
 
 async function state() {
   const stored = await readState();
-  const { session, sites, limits, pending, usage } = stored;
+  const { focus, limits, pending, usage } = stored;
   return {
-    session: isActive(session) ? session : null,
-    sites,
+    focus,
     limits,
     pending: pending?.limits ?? null,
     spent: usage.spent,
@@ -336,19 +296,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
       respond(await state());
       return;
     }
-    if (msg.type === 'start') {
-      await start(msg.minutes || null);
-      respond(await state());
-      return;
-    }
-    if (msg.type === 'stop') {
-      await stop();
-      respond(await state());
-      return;
-    }
-    if (msg.type === 'setSites') {
-      await chrome.storage.local.set({ sites: cleanSites(msg.sites || []) });
-      await syncRules();
+    if (msg.type === 'setFocus') {
+      await setFocus(msg.on);
       respond(await state());
       return;
     }
@@ -384,10 +333,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 chrome.alarms.onAlarm.addListener(() => tick());
 chrome.runtime.onStartup.addListener(() => tick());
 chrome.runtime.onInstalled.addListener(async () => {
-  const { sites, limits } = await chrome.storage.local.get(['sites', 'limits']);
-  const patch = {};
-  if (!Array.isArray(sites)) patch.sites = DEFAULT_SITES;
-  if (!limits || typeof limits !== 'object') patch.limits = { ...DEFAULT_LIMITS };
-  if (Object.keys(patch).length) await chrome.storage.local.set(patch);
+  const { limits } = await chrome.storage.local.get('limits');
+  if (!limits || typeof limits !== 'object') {
+    await chrome.storage.local.set({ limits: { ...DEFAULT_LIMITS } });
+  }
+  // The timed-session version kept a second list; there is one list now.
+  await chrome.storage.local.remove(['session', 'sites']);
   await tick();
 });
