@@ -29,7 +29,7 @@ loosens tomorrow. Lowering one, or writing in a new app, takes effect
 immediately. So the version of you that wrote the list this morning gets the
 last word tonight.
 
-The list is written, one app per line, under **More**:
+The list is written, one app per line, in the middle of **More**:
 
 ```
 instagram.com 20
@@ -43,7 +43,7 @@ when you click away. A line with no number keeps the minutes it already had.
 
 ## The record
 
-Under **More**, the last 7 days: one row per app, the week's total, and a bar
+Under **More**, below the list, the last 7 days: one row per app, the week's total, and a bar
 per day on one shared scale — a tall bar means the same thing in every row,
 and today is on the right and still counting. Hover a bar for that day's
 minutes.
@@ -65,7 +65,7 @@ makes the easy path the one you chose, not a wall.
 
 ## Hide feeds
 
-Under **More**, always on, independent of the limits. Four ticks, by
+The top of **More**, always on, independent of the limits. Four ticks, by
 the kind of thing rather than by the site — each covers every site that has
 one, and the sites that don't simply ignore it:
 
