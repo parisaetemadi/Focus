@@ -41,6 +41,17 @@ That is the only place apps are added, changed or removed, and it saves itself
 when you click away. A line with no number keeps the minutes it already had.
 `x.com` and `twitter.com` are one app, so they share one budget.
 
+## The record
+
+Under **More**, the last 7 days: one row per app, the week's total, and a bar
+per day on one shared scale — a tall bar means the same thing in every row,
+and today is on the right and still counting. Hover a bar for that day's
+minutes.
+
+Each day goes into the record when it ends, 30 days are kept, and an app you
+stop limiting keeps the days it already has. Like everything else here, it
+stays in `chrome.storage.local` and never leaves the machine.
+
 ## Focus now
 
 One button. It blocks every app on the list straight away, however many
@@ -82,7 +93,7 @@ until you change them. Settings from the old per-site version carry over.
 | File | Job |
 | --- | --- |
 | `background.js` | Counts the minutes, and turns limits and Focus now into `declarativeNetRequest` redirect rules; owns the alarms and the stored state. |
-| `popup.*` | What's left of each app up front, the written list under More. |
+| `popup.*` | What's left of each app up front, the record and the written list under More. |
 | `blocked.*` | The page you land on, and why you landed on it. |
 | `rules.js` | The hide catalog: group → site → selectors, and the old settings' upgrade path. |
 | `declutter.js` | Injects the hiding stylesheet; escapes Shorts URLs. |
