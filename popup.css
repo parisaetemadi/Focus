@@ -251,20 +251,3 @@ textarea {
 
 /* --- The record ----------------------------------------------------------- */
 
-.week + .week { margin-top: 12px; }
-
-.spark {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 26px;
-}
-
-.spark i {
-  flex: 1;
-  min-height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-
-.spark i.none { background: var(--line); }

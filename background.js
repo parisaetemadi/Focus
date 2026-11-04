@@ -14,7 +14,6 @@ const FOCUS_ALARM = 'focus-end';
 const TICK_MINUTES = 0.5; // Chrome won't repeat an alarm faster than 30s
 const MAX_STEP = 120000;  // a longer gap than this was sleep, not screen time
 const IDLE_AFTER = 60;    // seconds without input before time stops counting
-const KEEP_DAYS = 30;     // how many days of the record to hold on to
 
 // Minutes a day, per site. Spend them and the site is gone until midnight.
 const DEFAULT_LIMITS = {
@@ -71,7 +70,7 @@ function nextMidnight() {
 // loosened limit that was parked yesterday takes effect now.
 async function readState() {
   const store = await chrome.storage.local.get([
-    'focus', 'limits', 'pending', 'usage', 'tracking', 'history'
+    'focus', 'limits', 'pending', 'usage', 'tracking'
   ]);
 
   const day = todayKey();
@@ -82,15 +81,10 @@ async function readState() {
   let pending = store.pending ?? null;
   let usage = store.usage ?? null;
   const tracking = store.tracking ?? null;
-  let history = store.history && typeof store.history === 'object' ? store.history : {};
 
   const patch = {};
   if (!usage || usage.day !== day) {
-    // The day that just ended goes into the record before the counter resets.
-    if (usage?.day && Object.keys(usage.spent ?? {}).length) {
-      history = trimHistory({ ...history, [usage.day]: usage.spent });
-      patch.history = history;
-    }
+    // Yesterday's minutes are not kept: the day ends and the counter is new.
     usage = { day, spent: {} };
     patch.usage = usage;
   }
@@ -103,7 +97,7 @@ async function readState() {
   }
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
 
-  return { focus, limits, pending, usage, tracking, history };
+  return { focus, limits, pending, usage, tracking };
 }
 
 // A focus session, or null. `true` is how it was stored before focus had a
@@ -115,26 +109,6 @@ function readFocus(stored) {
   const endsAt = Number.isFinite(stored.endsAt) ? stored.endsAt : null;
   if (endsAt !== null && endsAt <= Date.now()) return null;
   return { endsAt };
-}
-
-// Oldest days fall off the end; the record is for looking back a little, not
-// for keeping a year of it.
-function trimHistory(history) {
-  const days = Object.keys(history).sort().slice(-KEEP_DAYS);
-  return Object.fromEntries(days.map((day) => [day, history[day]]));
-}
-
-// The last `count` days, today last, today's minutes live from the counter.
-function recentDays(history, usage, count = 7) {
-  const days = [];
-  const start = new Date();
-  start.setDate(start.getDate() - (count - 1));
-  for (let i = 0; i < count; i++) {
-    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-    const day = todayKey(date);
-    days.push({ day, spent: (day === usage.day ? usage.spent : history[day]) ?? {} });
-  }
-  return days;
 }
 
 function spentOn(usage, site) {
@@ -348,11 +322,10 @@ async function setLimits(input) {
 
 async function state() {
   const stored = await readState();
-  const { focus, limits, pending, usage, history } = stored;
+  const { focus, limits, pending, usage } = stored;
   return {
     focus,
     limits,
-    days: recentDays(history, usage),
     pending: pending?.limits ?? null,
     spent: usage.spent,
     resetsAt: nextMidnight(),
@@ -415,7 +388,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   if (!limits || typeof limits !== 'object') {
     await chrome.storage.local.set({ limits: { ...DEFAULT_LIMITS } });
   }
-  // The timed-session version kept a second list; there is one list now.
-  await chrome.storage.local.remove(['session', 'sites']);
+  // Leftovers from versions that kept a second list, and a 30-day record.
+  await chrome.storage.local.remove(['session', 'sites', 'history']);
   await tick();
 });

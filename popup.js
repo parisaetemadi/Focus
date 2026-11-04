@@ -11,7 +11,6 @@ const focusButton = document.getElementById('focus');
 const durations = document.getElementById('durations');
 const planBox = document.getElementById('plan');
 const pendingNote = document.getElementById('pending');
-const historyBox = document.getElementById('history');
 
 function send(message) {
   return chrome.runtime.sendMessage(message);
@@ -91,65 +90,6 @@ function renderLimits(state) {
     : [];
   pendingNote.hidden = !changes.length;
   pendingNote.textContent = `From tomorrow: ${changes.join(', ')}.`;
-}
-
-// --- The record ------------------------------------------------------------
-
-function human(ms) {
-  const mins = Math.round(ms / 60000);
-  if (!mins) return '—';
-  const hours = Math.floor(mins / 60);
-  if (!hours) return `${mins} min`;
-  return `${hours}h ${String(mins % 60).padStart(2, '0')}m`;
-}
-
-function weekday(day) {
-  const [year, month, date] = day.split('-').map(Number);
-  return new Date(year, month - 1, date)
-    .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
-}
-
-// One row per app: the week's total, and a bar per day on one shared scale,
-// so a tall bar means the same thing in every row.
-function renderHistory(state) {
-  const apps = new Set(Object.keys(state.limits));
-  for (const { spent } of state.days) for (const site of Object.keys(spent)) apps.add(site);
-
-  const total = (site) => state.days.reduce((sum, d) => sum + (d.spent[site] ?? 0), 0);
-  const peak = Math.max(
-    ...state.days.flatMap(({ spent }) => [...apps].map((site) => spent[site] ?? 0)),
-    60000
-  );
-
-  historyBox.replaceChildren();
-  for (const site of [...apps].sort((a, b) => total(b) - total(a))) {
-    const row = document.createElement('div');
-    row.className = 'week';
-
-    const top = document.createElement('div');
-    top.className = 'limit-top';
-    const name = document.createElement('span');
-    name.className = 'limit-name';
-    name.textContent = site;
-    const sum = document.createElement('span');
-    sum.className = 'limit-left';
-    sum.textContent = human(total(site));
-    top.append(name, sum);
-
-    const spark = document.createElement('div');
-    spark.className = 'spark';
-    for (const { day, spent } of state.days) {
-      const ms = spent[site] ?? 0;
-      const bar = document.createElement('i');
-      bar.style.height = `${Math.max(3, (ms / peak) * 100)}%`;
-      bar.classList.toggle('none', ms === 0);
-      bar.title = `${weekday(day)} — ${human(ms)}`;
-      spark.append(bar);
-    }
-
-    row.append(top, spark);
-    historyBox.append(row);
-  }
 }
 
 // --- The written list ------------------------------------------------------
@@ -238,7 +178,6 @@ function apply(state) {
   focusButton.classList.toggle('stopping', focusOn);
 
   renderLimits(state);
-  renderHistory(state);
   // Don't yank the list out from under the cursor mid-edit.
   if (document.activeElement !== planBox) planBox.value = planText(written);
 }

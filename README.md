@@ -45,18 +45,11 @@ it says what is still waiting.
 
 Deleting a line is a loosening, so it waits for midnight. The **×** beside an
 app takes it off the list there and then: the one same-day exit, deliberate
-and one app at a time. The days it already spent stay in the record.
+and one app at a time.
 
-## The record
-
-Under **More**, below the list, the last 7 days: one row per app, the week's total, and a bar
-per day on one shared scale — a tall bar means the same thing in every row,
-and today is on the right and still counting. Hover a bar for that day's
-minutes.
-
-Each day goes into the record when it ends, 30 days are kept, and an app you
-stop limiting keeps the days it already has. Like everything else here, it
-stays in `chrome.storage.local` and never leaves the machine.
+Nothing is kept past the day it happened. Today's minutes live in
+`chrome.storage.local` until midnight, and then they are gone — there is no
+record to look back at, by design.
 
 ## Focus
 
