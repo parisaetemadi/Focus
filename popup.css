@@ -133,9 +133,60 @@ main { padding: 16px; }
 
 /* --- Focus now ------------------------------------------------------------ */
 
+.chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+/* `display: grid` would otherwise win against the hidden attribute. */
+.chips[hidden] { display: none; }
+
+.chip {
+  padding: 7px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip:hover { border-color: #3b3f4b; }
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #23253d;
+  font-weight: 600;
+}
+
+/* The one escape hatch: takes an app off the list for good, today included. */
+button.drop {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+button.drop:hover {
+  background: var(--line);
+  color: var(--text);
+}
+
 button.primary {
   width: 100%;
-  margin-top: 18px;
+  margin-top: 10px;
   padding: 10px 0;
   border: 0;
   border-radius: 8px;

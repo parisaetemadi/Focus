@@ -8,6 +8,7 @@ const stale = document.getElementById('stale');
 const empty = document.getElementById('empty');
 const limitsBox = document.getElementById('limits');
 const focusButton = document.getElementById('focus');
+const durations = document.getElementById('durations');
 const planBox = document.getElementById('plan');
 const pendingNote = document.getElementById('pending');
 const historyBox = document.getElementById('history');
@@ -45,7 +46,17 @@ function buildLimits(limits) {
     name.textContent = site;
     const left = document.createElement('span');
     left.className = 'limit-left';
-    top.append(name, left);
+
+    const drop = document.createElement('button');
+    drop.className = 'drop';
+    drop.dataset.site = site;
+    drop.title = `Take ${site} off the list`;
+    drop.setAttribute('aria-label', `Take ${site} off the list`);
+    drop.innerHTML = '<svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true">'
+      + '<path d="M1 1l7 7M8 1l-7 7" stroke="currentColor" stroke-width="1.5" '
+      + 'stroke-linecap="round"/></svg>';
+
+    top.append(name, left, drop);
 
     const track = document.createElement('div');
     track.className = 'bar';
@@ -166,17 +177,41 @@ planBox.addEventListener('change', async () => {
   apply(await send({ type: 'setLimits', limits: parsePlan(planBox.value, lastLimits) }));
 });
 
-// --- Focus now -------------------------------------------------------------
+limitsBox.addEventListener('click', async (event) => {
+  const drop = event.target.closest('button.drop');
+  if (drop) apply(await send({ type: 'dropToday', site: drop.dataset.site }));
+});
+
+// --- Focus -----------------------------------------------------------------
+
+let chosenMinutes = 60;
+
+durations.addEventListener('click', (event) => {
+  const chip = event.target.closest('.chip');
+  if (!chip) return;
+  chosenMinutes = Number(chip.dataset.minutes);
+  paintChips();
+});
+
+function paintChips() {
+  for (const chip of durations.querySelectorAll('.chip')) {
+    chip.setAttribute('aria-pressed', String(Number(chip.dataset.minutes) === chosenMinutes));
+  }
+}
 
 focusButton.addEventListener('click', async () => {
-  apply(await send({ type: 'setFocus', on: !focusOn }));
+  apply(await send({
+    type: 'setFocus',
+    on: !focusOn,
+    minutes: focusOn ? null : chosenMinutes || null
+  }));
 });
 
 let focusOn = false;
 let lastLimits = {};
 
 function apply(state) {
-  focusOn = state.focus;
+  focusOn = Boolean(state.focus);
   // What you wrote, not what survived into today: a line you deleted or
   // raised lives in `pending` until midnight, and the box must keep showing
   // your version or the edit looks like it was thrown away.
@@ -185,15 +220,22 @@ function apply(state) {
   empty.hidden = Object.keys(state.limits).length > 0;
 
   const spent = Object.keys(state.limits).filter((site) => state.blocked.includes(site)).length;
-  const on = state.focus || spent > 0;
+  const on = focusOn || spent > 0;
   dot.classList.toggle('on', on);
   status.classList.toggle('on', on);
-  if (state.focus) status.textContent = 'Focus on';
-  else if (spent) status.textContent = spent === 1 ? '1 app spent' : `${spent} apps spent`;
-  else status.textContent = 'Nothing spent yet';
+  if (focusOn) {
+    const left = state.focus.endsAt && state.focus.endsAt - Date.now();
+    status.textContent = left ? `Focus · ${format(left)}` : 'Focus on';
+  } else if (spent) {
+    status.textContent = spent === 1 ? '1 app spent' : `${spent} apps spent`;
+  } else {
+    status.textContent = 'Nothing spent yet';
+  }
 
-  focusButton.textContent = state.focus ? 'Stop focus' : 'Focus now';
-  focusButton.classList.toggle('stopping', state.focus);
+  // Nothing to pick while a session is running; the clock is in the header.
+  durations.hidden = focusOn;
+  focusButton.textContent = focusOn ? 'Stop focus' : 'Focus now';
+  focusButton.classList.toggle('stopping', focusOn);
 
   renderLimits(state);
   renderHistory(state);
@@ -219,6 +261,7 @@ async function refresh() {
   apply(state);
 }
 
+paintChips();
 refresh();
 // The minutes tick down while the popup is open, so keep asking.
 setInterval(refresh, 1000);

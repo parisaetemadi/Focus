@@ -4,11 +4,12 @@
 // One list of apps, each with minutes a day. Two ways one gets blocked:
 //   limit — its minutes for today are spent. Nothing in the UI lifts that: it
 //           stands until midnight, and a limit you loosen loosens tomorrow.
-//   focus — Focus now is on, which blocks every app on the list until you
-//           stop it.
+//   focus — Focus is on, which blocks every app on the list for the stretch
+//           you picked, or until you stop it.
 
 const TICK_ALARM = 'focus-tick';
 const DAY_ALARM = 'focus-day';
+const FOCUS_ALARM = 'focus-end';
 
 const TICK_MINUTES = 0.5; // Chrome won't repeat an alarm faster than 30s
 const MAX_STEP = 120000;  // a longer gap than this was sleep, not screen time
@@ -74,7 +75,7 @@ async function readState() {
   ]);
 
   const day = todayKey();
-  const focus = Boolean(store.focus);
+  const focus = readFocus(store.focus);
   let limits = store.limits && typeof store.limits === 'object'
     ? store.limits
     : { ...DEFAULT_LIMITS };
@@ -93,6 +94,7 @@ async function readState() {
     usage = { day, spent: {} };
     patch.usage = usage;
   }
+  if (store.focus && !focus) patch.focus = null; // its stretch ran out
   if (pending && pending.day !== day) {
     limits = cleanLimits(pending.limits);
     pending = null;
@@ -102,6 +104,17 @@ async function readState() {
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
 
   return { focus, limits, pending, usage, tracking, history };
+}
+
+// A focus session, or null. `true` is how it was stored before focus had a
+// clock; a stretch that has run out reads as no session at all.
+function readFocus(stored) {
+  if (!stored) return null;
+  if (stored === true) return { endsAt: null };
+  if (typeof stored !== 'object') return null;
+  const endsAt = Number.isFinite(stored.endsAt) ? stored.endsAt : null;
+  if (endsAt !== null && endsAt <= Date.now()) return null;
+  return { endsAt };
 }
 
 // Oldest days fall off the end; the record is for looking back a little, not
@@ -212,16 +225,25 @@ async function syncRules() {
     });
   }
 
-  await syncAlarms();
+  await syncAlarms(state.focus);
   await enforceTabs(blocked);
   return blocked;
 }
 
 // A standing alarm at midnight, so a spent limit lifts itself when the day
-// turns over even if the browser sits untouched.
-async function syncAlarms() {
+// turns over even if the browser sits untouched, and one at the end of a timed
+// focus session so it stops on time with the browser untouched too.
+async function syncAlarms(focus) {
   if (!(await chrome.alarms.get(DAY_ALARM))) {
     await chrome.alarms.create(DAY_ALARM, { when: nextMidnight(), periodInMinutes: 1440 });
+  }
+  const end = await chrome.alarms.get(FOCUS_ALARM);
+  if (focus?.endsAt) {
+    if (end?.scheduledTime !== focus.endsAt) {
+      await chrome.alarms.create(FOCUS_ALARM, { when: focus.endsAt });
+    }
+  } else if (end) {
+    await chrome.alarms.clear(FOCUS_ALARM);
   }
 }
 
@@ -276,9 +298,32 @@ async function tick() {
 
 // --- Focus now and limits --------------------------------------------------
 
-// Focus now has no timer: it is on until you turn it off.
-async function setFocus(on) {
-  await chrome.storage.local.set({ focus: Boolean(on) });
+// Focus runs for the stretch you picked, or with no end until you stop it.
+async function setFocus(on, minutes) {
+  const length = Math.round(Number(minutes));
+  const endsAt = Number.isFinite(length) && length > 0 ? Date.now() + length * 60000 : null;
+  await chrome.storage.local.set({ focus: on ? { endsAt } : null });
+  await syncRules();
+}
+
+// The one way off the list today. Everything else about a limit is one-way —
+// you can tighten it now and only loosen it tomorrow — so taking an app off
+// altogether is deliberate, and it leaves the day's record alone.
+async function dropToday(input) {
+  const site = canonical(normalizeSite(input));
+  if (!site) return;
+  const { limits, pending } = await readState();
+  const patch = {};
+  if (site in limits) {
+    patch.limits = { ...limits };
+    delete patch.limits[site];
+  }
+  if (pending && site in pending.limits) {
+    const want = { ...pending.limits };
+    delete want[site];
+    patch.pending = { day: pending.day, limits: want };
+  }
+  if (Object.keys(patch).length) await chrome.storage.local.set(patch);
   await syncRules();
 }
 
@@ -325,7 +370,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
       return;
     }
     if (msg.type === 'setFocus') {
-      await setFocus(msg.on);
+      await setFocus(msg.on, msg.minutes);
+      respond(await state());
+      return;
+    }
+    if (msg.type === 'dropToday') {
+      await dropToday(msg.site);
       respond(await state());
       return;
     }

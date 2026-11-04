@@ -11,7 +11,7 @@ away. Manifest V3, plain JS, no build step, nothing leaves the browser.
 
 ## The popup
 
-One screen: each app, what's left of its day, a bar, and **Focus now**.
+One screen: each app, what's left of its day, a bar, and a focus session.
 Everything else is under **More**, and nothing has a save button.
 
 ## App limits
@@ -37,9 +37,15 @@ tiktok.com 5
 x.com 20
 ```
 
-That is the only place apps are added, changed or removed, and it saves itself
+That is where apps are added and their minutes changed, and it saves itself
 when you click away. A line with no number keeps the minutes it already had.
-`x.com` and `twitter.com` are one app, so they share one budget.
+`x.com` and `twitter.com` are one app, so they share one budget. The box keeps
+whatever you wrote, even when part of it only lands tomorrow — the line under
+it says what is still waiting.
+
+Deleting a line is a loosening, so it waits for midnight. The **×** beside an
+app takes it off the list there and then: the one same-day exit, deliberate
+and one app at a time. The days it already spent stay in the record.
 
 ## The record
 
@@ -52,12 +58,14 @@ Each day goes into the record when it ends, 30 days are kept, and an app you
 stop limiting keeps the days it already has. Like everything else here, it
 stays in `chrome.storage.local` and never leaves the machine.
 
-## Focus now
+## Focus
 
-One button. It blocks every app on the list straight away, however many
-minutes they have left, and stays on until you stop it. Unlike a spent limit,
-this one is yours to call off — it's for the hour you decided to work, not for
-the habit.
+Pick **1 hour**, **2 hours**, **3 hours** or **until I stop**, then **Focus
+now**. It blocks every app on the list straight away, however many minutes
+they have left. A timed session ends on its own — the header counts it down,
+and an alarm stops it even if the browser sits untouched. Unlike a spent
+limit, this one is yours to call off early: it's for the hour you decided to
+work, not for the habit.
 
 The honest caveat for both: this is an extension, so Chrome can still turn it
 off at `chrome://extensions`, and another browser or profile never had it. It
