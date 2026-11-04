@@ -177,7 +177,11 @@ let lastLimits = {};
 
 function apply(state) {
   focusOn = state.focus;
-  lastLimits = state.limits;
+  // What you wrote, not what survived into today: a line you deleted or
+  // raised lives in `pending` until midnight, and the box must keep showing
+  // your version or the edit looks like it was thrown away.
+  const written = state.pending ?? state.limits;
+  lastLimits = written;
   empty.hidden = Object.keys(state.limits).length > 0;
 
   const spent = Object.keys(state.limits).filter((site) => state.blocked.includes(site)).length;
@@ -194,7 +198,7 @@ function apply(state) {
   renderLimits(state);
   renderHistory(state);
   // Don't yank the list out from under the cursor mid-edit.
-  if (document.activeElement !== planBox) planBox.value = planText(state.limits);
+  if (document.activeElement !== planBox) planBox.value = planText(written);
 }
 
 async function refresh() {
