@@ -1,5 +1,7 @@
 # Focus time
 
+> **Purpose.** Chrome extension: give each distracting app a few minutes a day, then take it away — plus feed, Shorts/Reels and suggestion hiding.
+
 A Chrome extension that gives each app a few minutes a day and then takes it
 away. Manifest V3, plain JS, no build step, nothing leaves the browser.
 
@@ -122,3 +124,12 @@ that started yesterday is never charged to today.
 - Decluttering reads no page content; it only adds a stylesheet.
 - Unpacked extensions stay installed, but Chrome nags about developer mode on
   each launch. Publishing to the Web Store ($5 one-time) removes that.
+
+## Agent rules
+
+- Commit straight to `main` and push — no branches, no PRs, no merges, never watch a PR.
+- One commit per session. Test it yourself before committing; don't report untested work.
+- Don't ask permission for deploys, settings, or deleting what's been replaced.
+- Save tokens: bullets over prose, read only the files named, targeted edits, batched tool calls.
+- Comments: one bullet list per file or section, never a comment per chunk of code.
+- Full detail: [CLAUDE.md](CLAUDE.md)
