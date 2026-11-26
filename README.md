@@ -1,6 +1,6 @@
 # Focus time
 
-> **Purpose.** Chrome extension: give each distracting app a few minutes a day, then take it away — plus feed, Shorts/Reels and suggestion hiding.
+> **Purpose.** A Chrome extension that gives each distracting app a few minutes a day, then blocks it. Also hides feeds, Reels and suggestions.
 
 A Chrome extension that gives each app a few minutes a day and then takes it
 away. Manifest V3, plain JS, no build step, nothing leaves the browser.
